@@ -25,7 +25,7 @@ O diferencial visual são as **cenas 3D renderizadas no Unreal Engine 5.8**, que
 |---|---|
 | Site | [Astro](https://astro.build) 7, estático, sem framework de UI e sem outras dependências |
 | Cenas 3D | Unreal Engine 5.8, Movie Render Queue, Python (Geometry Script) via MCP |
-| Hospedagem | Vercel (configurada por `vercel.json`) |
+| Hospedagem | Vercel (preset Astro, pasta `site`, cabeçalhos em `site/vercel.json`) |
 | Domínio | Hostinger (próxima etapa) |
 
 ## Estrutura
@@ -38,12 +38,12 @@ O diferencial visual são as **cenas 3D renderizadas no Unreal Engine 5.8**, que
 │   ├── src/data/mode.ts     # quando os itens EXEMPLO aparecem
 │   ├── src/components/      # Page, Chapter (cena + scroll), Calculadora, Diagnostico
 │   ├── src/scripts/scroll.ts# player dos quadros, cor por seção, menu, giro do hero
+│   ├── vercel.json          # cache dos quadros e cabeçalhos de segurança
 │   └── public/frames/<cena>/1x1 e 1x1m   # quadros WebP (desktop e celular) + crop.json
 ├── unreal/KM360/            # projeto Unreal Engine 5.8
 │   ├── Scripts/             # build_<cena>.py (monta cada cena), render, conversão
 │   └── PROGRESS.md          # pipeline de render e decisões técnicas
 ├── docs/superpowers/specs/  # especificação do projeto
-├── vercel.json              # build, cache e cabeçalhos de segurança da Vercel
 └── plano.md                 # checklist do que foi feito e do que falta
 ```
 
@@ -72,7 +72,7 @@ npm run check
 ## Publicar na Vercel
 
 1. Na Vercel, clique em **Add New → Project** e importe o repositório `Snipertecoficial/km360`.
-2. Não mude nada nas configurações. O `vercel.json` já define a instalação, o build (`site/dist`), o cache dos quadros e os cabeçalhos de segurança.
+2. Confira se a Vercel escolheu **Root Directory `site`** e o preset **Astro** (ela detecta sozinha). O `site/vercel.json` cuida do cache dos quadros e dos cabeçalhos de segurança.
 3. Clique em **Deploy**. Cada push na `main` publica em produção, e cada branch ou PR ganha um link de preview.
 
 Variáveis de ambiente opcionais (Settings → Environment Variables):
@@ -97,7 +97,7 @@ Variáveis de ambiente opcionais (Settings → Environment Variables):
 SITE_URL=https://seudominio.com.br npm run build
 ```
 
-Depois envie o conteúdo de `site/dist/` para a pasta `public_html` pelo Gerenciador de Arquivos ou por FTP. Nesse caso o cache e os cabeçalhos do `vercel.json` não valem; eles precisariam de um `.htaccess`.
+Depois envie o conteúdo de `site/dist/` para a pasta `public_html` pelo Gerenciador de Arquivos ou por FTP. Nesse caso o cache e os cabeçalhos do `site/vercel.json` não valem; eles precisariam de um `.htaccess`.
 
 ## Conteúdo provisório (EXEMPLO)
 

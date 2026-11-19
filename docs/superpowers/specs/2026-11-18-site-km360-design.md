@@ -50,7 +50,7 @@ Astro (estático), sem framework de UI e sem dependências além do próprio Ast
 - `src/components/Chapter.astro`: bloco sticky com canvas e fallback, conta os quadros em `public/frames`.
 - `src/scripts/scroll.ts`: progresso por capítulo (`--p`), desenho dos quadros e anel de progresso.
 - Diagnóstico: `<form>` nativo, e um JS monta a URL do `wa.me`.
-- Deploy: Vercel (`vercel.json` na raiz, sem configuração no painel). Em produção os itens EXEMPLO são escondidos (`src/data/mode.ts`). Domínio oficial depois, na Hostinger (ver README).
+- Deploy: Vercel (Root Directory `site`, preset Astro; cache e cabeçalhos em `site/vercel.json`). Em produção os itens EXEMPLO são escondidos (`src/data/mode.ts`). Domínio oficial depois, na Hostinger (ver README).
 
 ## Qualidade
 - Mobile primeiro, com `svh` no sticky e enquadramento 9:16 próprio.

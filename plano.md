@@ -27,7 +27,8 @@ Spec: [docs/superpowers/specs/2026-11-18-site-km360-design.md](docs/superpowers/
 - [x] Mini-diagnóstico que abre o WhatsApp (testado: validação, exclusão "ainda não vendo", mensagem)
 - [x] Trava de provisórios em produção (testado: `VERCEL_ENV=production` falha)
 - [x] Validação no browser (desktop 800px, mobile 375px, PT e ES, sem erros no console)
-- [ ] Deploy de preview na Vercel (aguardando sua autorização)
+- [x] Repositório GitHub `Snipertecoficial/km360` (main) com README em português e `vercel.json` pronto
+- [ ] Deploy na Vercel (aguardando sua autorização ou o import pelo painel)
 
 ## Fase 3: Cinemática
 - [ ] Cena premium: K/M metálicos, anel 360, 4 estações e gráfico

@@ -1,0 +1,13 @@
+{
+  "name": "km360",
+  "private": true,
+  "description": "Site oficial da KM 360 Assessoria Comercial (código em site/, cenas 3D em unreal/KM360).",
+  "engines": {
+    "node": "24.x"
+  },
+  "scripts": {
+    "dev": "npm --prefix site run dev",
+    "build": "npm --prefix site run build",
+    "check": "node site/src/data/content.check.ts"
+  }
+}

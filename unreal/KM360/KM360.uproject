@@ -1,0 +1,17 @@
+{
+  "FileVersion": 3,
+  "EngineAssociation": "5.8",
+  "Category": "",
+  "Description": "KM 360 - cenas cinematograficas para o site",
+  "Plugins": [
+    { "Name": "ModelContextProtocol", "Enabled": true },
+    { "Name": "ToolsetRegistry", "Enabled": true },
+    { "Name": "AllToolsets", "Enabled": true },
+    { "Name": "Terminal", "Enabled": true },
+    { "Name": "PythonScriptPlugin", "Enabled": true },
+    { "Name": "PythonBridge", "Enabled": true },
+    { "Name": "MovieRenderPipeline", "Enabled": true },
+    { "Name": "GeometryScripting", "Enabled": true },
+    { "Name": "GLTFExporter", "Enabled": true }
+  ]
+}

@@ -1,0 +1,16 @@
+{
+  "FileVersion": 3,
+  "Version": 1,
+  "VersionName": "0.1",
+  "FriendlyName": "Python Bridge",
+  "Description": "MCP toolset that runs Python in the editor interpreter (full unreal API). Runs arbitrary code with full file access: EditorOnly, disabled by default.",
+  "Category": "Editor",
+  "CanContainContent": true,
+  "EditorOnly": true,
+  "EnabledByDefault": false,
+  "IsExperimentalVersion": true,
+  "Plugins": [
+    { "Name": "PythonScriptPlugin", "Enabled": true },
+    { "Name": "ToolsetRegistry", "Enabled": true }
+  ]
+}

@@ -1,0 +1,65 @@
+---
+// Capítulo com clipe Unreal avançado pelo scroll.
+// Quadros em public/frames/<clip>/1x1/0001.webp (preferido: objeto com fundo transparente,
+// desenhado com fit "contain" ao lado do texto) ou 16x9|9x16 (tela cheia, "cover").
+// Sem quadros, mostra o slot "fallback". Com `turntable`, o objeto gira com o arraste.
+import fs from 'node:fs';
+import path from 'node:path';
+
+interface Props {
+  clip: string;
+  id?: string;
+  len?: number; // altura total do capítulo em vh (quanto scroll o clipe consome)
+  flip?: boolean; // desktop: objeto à esquerda do texto
+  turntable?: string; // aria-label do objeto girável
+  hint?: string;
+  class?: string;
+  noFrames?: boolean; // ignora os quadros do clipe e mostra sempre o slot "fallback"
+}
+const { clip, id, len = 200, flip, turntable, hint, class: cls, noFrames } = Astro.props;
+
+const count = (ratio: string) => {
+  if (noFrames) return 0;
+  try {
+    return fs.readdirSync(path.join(process.cwd(), 'public/frames', clip, ratio)).filter((f) => f.endsWith('.webp')).length;
+  } catch {
+    return 0;
+  }
+};
+const f11 = count('1x1');
+const f11m = count('1x1m'); // versão 720 px para celular (gerada por unreal/KM360/Scripts/mobile_frames.py)
+// Caixa do objeto no quadro (0..1), sem a margem transparente do render. Gerada junto com o 1x1m.
+const crop = (() => {
+  try {
+    const c = JSON.parse(fs.readFileSync(path.join(process.cwd(), 'public/frames', clip, 'crop.json'), 'utf8'));
+    return { attr: [c.x, c.y, c.w, c.h].join(','), ar: (c.w / c.h).toFixed(3) };
+  } catch {
+    return undefined;
+  }
+})();
+const f169 = count('16x9');
+const f916 = count('9x16');
+const hasFrames = f11 + f169 + f916 > 0;
+const full = !f11 && hasFrames; // só 16x9/9x16: tela cheia
+const objAttrs = turntable ? { role: 'img', 'aria-label': turntable, 'data-turntable': '' } : { 'aria-hidden': 'true' };
+---
+
+<section
+  id={id}
+  class:list={['chapter', cls, { flip }]}
+  data-clip={clip}
+  data-f11={f11}
+  data-f11m={f11m}
+  data-crop={f11 ? crop?.attr : undefined}
+  data-f169={f169}
+  data-f916={f916}
+  style={`--len:${len};--crop-ar:${(f11 && crop?.ar) || 1}`}
+>
+  <div class="chapter-stage">
+    <div class:list={['chapter-obj', { full, tt: turntable }]} {...objAttrs}>
+      {hasFrames ? <canvas class="chapter-canvas"></canvas> : <div class="chapter-fallback"><slot name="fallback" /></div>}
+      {hint && <p class="tt-hint kicker" aria-hidden="true">{hint}</p>}
+    </div>
+    <div class="chapter-overlay"><slot /></div>
+  </div>
+</section>

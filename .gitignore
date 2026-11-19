@@ -1,0 +1,19 @@
+# sistema
+.DS_Store
+Thumbs.db
+
+# material de briefing do cliente (não vai para o repositório público)
+/WhatsApp Image*
+
+# dependências, builds e segredos
+node_modules/
+.vercel/
+.env
+.env.*
+
+# configurações locais do Claude Code (permissões da máquina)
+.claude/settings.local.json
+
+# Python
+__pycache__/
+*.pyc

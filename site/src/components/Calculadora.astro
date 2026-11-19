@@ -1,0 +1,244 @@
+---
+// Calculadora de margem (aversão à perda + reciprocidade). Lógica em src/data/calc.ts.
+import { copy, fees, marketplaces, compareChannels, type Lang } from '../data/content';
+import { CALC_FIELDS, calc, money, pct, type CalcRaw } from '../data/calc';
+import { SHOW_EXAMPLES } from '../data/mode';
+interface Props { lang: Lang }
+const { lang } = Astro.props;
+const { calc: c, htmlLang: loc, badge } = copy[lang];
+
+// Primeiro desenho já com os valores-padrão (funciona sem JS).
+const raw0 = Object.fromEntries(CALC_FIELDS.map((f) => [f.key, f.value])) as CalcRaw;
+const r0 = calc(raw0);
+const v0 = r0.ok ? r0 : null;
+const cmp0 = compareChannels(raw0).map((x) => ({ ...x, real: x.res.ok ? x.res.real : 0, margin: x.res.ok ? x.res.margin : 0 }));
+const top0 = Math.max(0, ...cmp0.map((x) => x.real));
+const presets = SHOW_EXAMPLES || !fees.placeholder; // tarifas EXEMPLO não vão ao ar: em produção fica só o modo manual
+const fmtIn = (n: number) => n.toLocaleString(loc, { maximumFractionDigits: 2 });
+---
+
+<section class="block calc" id="calculadora" aria-labelledby="calc-title">
+  <div class="calc-head">
+    <p class="kicker">{c.kicker}</p>
+    <h2 id="calc-title" class="h2">{c.title}</h2>
+    <p class="lede">{c.text}</p>
+  </div>
+
+  <form class="calc-form" data-lang={lang} data-loc={loc} novalidate>
+    <div class="calc-in">
+      {presets && <fieldset class="calc-ch">
+        <legend>{c.channel} {fees.placeholder && <span class="badge">{badge}</span>}</legend>
+        <div class="chips">
+          {marketplaces.map((m) => (
+            <label class="chip" style={`--accent:${m.accent}`}><input type="radio" name="ch" value={m.id} /><span><i class="dot" aria-hidden="true"></i>{m.name}</span></label>
+          ))}
+          <label class="chip"><input type="radio" name="ch" value="" checked /><span>{c.manual}</span></label>
+        </div>
+        <p class="calc-ch-note">{c.feesNote}</p>
+      </fieldset>}
+      {CALC_FIELDS.map((f) =>
+        f.kind === 'pct' ? (
+          <div class="cf cf-range">
+            <label for={`c-${f.key}`}>{c.fields[f.key]}</label>
+            <span class="cf-val num" data-val={f.key} aria-hidden="true">{fmtIn(f.value)}%</span>
+            <input type="range" id={`c-${f.key}`} name={f.key} min="0" max={f.max} step="0.5" value={f.value} style={`--fill:${(f.value / (f.max ?? 100)) * 100}%`} />
+          </div>
+        ) : (
+          <div class="cf">
+            <label for={`c-${f.key}`}>{c.fields[f.key]}</label>
+            <input
+              type="number"
+              id={`c-${f.key}`}
+              name={f.key}
+              inputmode={f.kind === 'int' ? 'numeric' : 'decimal'}
+              min={f.key === 'price' ? '0.01' : '0'}
+              step={f.kind === 'int' ? '1' : '0.01'}
+              value={f.kind === 'money' ? f.value.toFixed(2) : f.value}
+              required
+              aria-describedby={`c-${f.key}-err`}
+            />
+            <p class="cf-err" id={`c-${f.key}-err`} hidden></p>
+          </div>
+        ),
+      )}
+      <p class="calc-note">{c.note}</p>
+    </div>
+
+    <div class="receipt inv" data-tilt>
+      <p class="kicker">{c.receipt}</p>
+      <div class="calc-alert base" hidden>
+        <p class="calc-alert-t">{c.alert}</p>
+        <p>{c.loss}: <strong class="num" data-out="loss">—</strong></p>
+      </div>
+      <dl class="lines">
+        <div><dt>{c.head}</dt><dd class="num" data-out="head">{v0 && money(loc, v0.head)}</dd></div>
+        <div><dt>{c.real}</dt><dd class="num" data-out="real">{v0 && money(loc, v0.real)}</dd></div>
+        <div><dt>{c.margin}</dt><dd class="num" data-out="margin">{v0 && pct(loc, v0.margin)}</dd></div>
+      </dl>
+      <p class="leak">
+        <span>{c.leakA}</span>
+        <strong class="leak-n num" data-out="leak">{v0 && money(loc, v0.leak)}</strong>
+        <span>{c.leakB}</span>
+      </p>
+      <dl class="lines">
+        <div><dt>{c.month}</dt><dd class="num" data-out="month">{v0 && money(loc, v0.month)}</dd></div>
+      </dl>
+      <p class="calc-invalid" hidden>{c.invalid}</p>
+      <a class="btn btn-primary" href="#diagnostico" data-calc-cta>{c.cta} <span class="arr" aria-hidden="true">→</span></a>
+      <p class="calc-cta-note">{c.ctaNote}</p>
+      <p class="sr-only" aria-live="polite" data-calc-status></p>
+    </div>
+
+
+    {presets && <div class="calc-compare">
+      <h3 class="h3">{c.compareTitle} {fees.placeholder && <span class="badge">{badge}</span>}</h3>
+      <p>{c.compareText}</p>
+      <ul class="cmp">
+        {cmp0.map((x) => (
+          <li data-cmp={x.id} class:list={{ loss: x.real <= 0 }} style={`--accent:${x.accent};--w:${top0 ? Math.max(0, x.real) / top0 : 0}`}>
+            <span class="cmp-name"><i class="dot" aria-hidden="true"></i>{x.name} <span class="cmp-best" hidden={!(top0 && x.real === top0)}>{c.best}</span></span>
+            <span class="cmp-val num"><b data-cmp-real>{money(loc, x.real)}</b> <small>{c.perPiece} · <span data-cmp-margin>{pct(loc, x.margin)}</span></small></span>
+            <span class="cmp-bar" aria-hidden="true"><i></i></span>
+          </li>
+        ))}
+      </ul>
+    </div>}
+  </form>
+</section>
+
+<script>
+  import { calc, money, pct, CALC_FIELDS, type CalcKey, type CalcRaw } from '../data/calc';
+  import { copy, fees, compareChannels, type Lang, type MarketplaceId } from '../data/content';
+
+  const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  document.querySelectorAll<HTMLFormElement>('.calc-form').forEach((form) => {
+    const lang = form.dataset.lang as Lang;
+    const loc = form.dataset.loc!;
+    const t = copy[lang].calc;
+    const $ = <T extends Element>(s: string) => form.querySelector<T>(s)!;
+    const input = (k: CalcKey) => $<HTMLInputElement>(`[name="${k}"]`);
+    const outs = {
+      head: $<HTMLElement>('[data-out="head"]'),
+      real: $<HTMLElement>('[data-out="real"]'),
+      margin: $<HTMLElement>('[data-out="margin"]'),
+      leak: $<HTMLElement>('[data-out="leak"]'),
+      month: $<HTMLElement>('[data-out="month"]'),
+      loss: $<HTMLElement>('[data-out="loss"]'),
+    };
+    const shown: Record<string, number> = {};
+    const status = $<HTMLElement>('[data-calc-status]');
+    const alert = $<HTMLElement>('.calc-alert');
+    const invalid = $<HTMLElement>('.calc-invalid');
+    let last: ReturnType<typeof calc> | null = null;
+    let say = 0;
+
+    // Número animado: interpola do valor mostrado até o novo em 450ms.
+    function tween(key: keyof typeof outs, to: number, fmt: (n: number) => string) {
+      const el = outs[key];
+      const from = shown[key] ?? to;
+      shown[key] = to;
+      if (reduced || from === to) { el.textContent = fmt(to); return; }
+      const t0 = performance.now();
+      const step = (now: number) => {
+        if (shown[key] !== to) return; // outro valor chegou no meio
+        const k = Math.min(1, (now - t0) / 450);
+        el.textContent = fmt(from + (to - from) * (1 - (1 - k) ** 3));
+        if (k < 1) requestAnimationFrame(step);
+      };
+      requestAnimationFrame(step);
+    }
+
+    function run() {
+      const raw = {} as CalcRaw;
+      for (const f of CALC_FIELDS) {
+        const el = input(f.key);
+        raw[f.key] = el.value.trim() === '' || el.validity.badInput ? null : Number(el.value);
+        if (f.kind === 'pct') {
+          form.querySelector(`[data-val="${f.key}"]`)!.textContent = `${Number(el.value).toLocaleString(loc)}%`;
+          el.style.setProperty('--fill', `${(Number(el.value) / Number(el.max)) * 100}%`);
+        }
+      }
+      const r = calc(raw);
+      last = r;
+      for (const f of CALC_FIELDS) {
+        if (f.kind === 'pct') continue;
+        const el = input(f.key);
+        const err = !r.ok ? r.errors[f.key] : undefined;
+        const box = $<HTMLElement>(`#c-${f.key}-err`);
+        el.setAttribute('aria-invalid', String(!!err));
+        box.hidden = !err;
+        box.textContent = err ? t.errors[err] : '';
+      }
+      invalid.hidden = r.ok;
+      form.classList.toggle('is-invalid', !r.ok);
+      if (!r.ok) {
+        Object.values(outs).forEach((o) => (o.textContent = '—'));
+        form.querySelectorAll('[data-cmp-real], [data-cmp-margin]').forEach((o) => (o.textContent = '—'));
+        for (const k in shown) delete shown[k];
+        return;
+      }
+
+      const m = (n: number) => money(loc, n);
+      tween('head', r.head, m);
+      tween('real', r.real, m);
+      tween('margin', r.margin, (n) => pct(loc, n));
+      tween('leak', r.leak, m);
+      tween('month', r.month, m);
+      tween('loss', Math.max(0, -r.month), m);
+      alert.hidden = !r.loss;
+      form.classList.toggle('is-loss', r.loss);
+
+      // Comparativo dos 4 canais com os mesmos números da peça.
+      const cmp = compareChannels(raw).map((x) => ({ id: x.id, real: x.res.ok ? x.res.real : 0, margin: x.res.ok ? x.res.margin : 0 }));
+      const top = Math.max(0, ...cmp.map((x) => x.real));
+      for (const x of cmp) {
+        const li = form.querySelector<HTMLElement>(`[data-cmp="${x.id}"]`);
+        if (!li) continue; // sem comparativo (produção sem tarifas confirmadas)
+        li.querySelector('[data-cmp-real]')!.textContent = m(x.real);
+        li.querySelector('[data-cmp-margin]')!.textContent = pct(loc, x.margin);
+        li.querySelector<HTMLElement>('.cmp-best')!.hidden = !(top && x.real === top);
+        li.classList.toggle('loss', x.real <= 0);
+        li.style.setProperty('--w', String(top ? Math.max(0, x.real) / top : 0));
+      }
+
+      clearTimeout(say);
+      say = window.setTimeout(() => {
+        status.textContent = r.loss
+          ? `${t.alert} ${t.loss}: ${m(-r.month)}.`
+          : `${t.real}: ${m(r.real)}. ${t.margin}: ${pct(loc, r.margin)}. ${t.leakA} ${m(r.leak)} ${t.leakB}`;
+      }, 700);
+    }
+
+    // Canal escolhido preenche comissão e frete; mexer nesses campos à mão volta para "manual".
+    form.addEventListener('input', (e) => {
+      const el = e.target as HTMLInputElement;
+      if (el.name === 'ch' && el.value) {
+        const f = fees.byMk[el.value as MarketplaceId];
+        input('commission').value = String(f.commission);
+        input('freight').value = f.freight.toFixed(2);
+      } else if (el.name === 'commission' || el.name === 'freight') {
+        const manual = form.querySelector<HTMLInputElement>('input[name="ch"][value=""]');
+        if (manual) manual.checked = true;
+      }
+      run();
+    });
+    form.addEventListener('submit', (e) => e.preventDefault());
+
+    // CTA: anexa o resumo da simulação ao formulário de diagnóstico.
+    $<HTMLAnchorElement>('[data-calc-cta]').addEventListener('click', () => {
+      (window as { dataLayer?: object[] }).dataLayer?.push({ event: 'calculadora_cta' });
+      if (!last?.ok) return;
+      const sim = { price: Number(input('price').value), cost: Number(input('cost').value), real: last.real, margin: last.margin };
+      const box = document.querySelector<HTMLInputElement>('#diagnostico input[name="sim"]');
+      if (!box) return;
+      box.value = JSON.stringify(sim);
+      box.checked = true;
+      box.closest<HTMLElement>('.sim-attach')!.hidden = false;
+      box.closest('.sim-attach')!.querySelector('[data-sim-text]')!.textContent =
+        `${t.real}: ${money(loc, sim.real)} · ${t.margin}: ${pct(loc, sim.margin)}`;
+    });
+
+    run();
+  });
+</script>

@@ -1,0 +1,334 @@
+---
+import Chapter from './Chapter.astro';
+import Ring from './Ring.astro';
+import Diagnostico from './Diagnostico.astro';
+import Calculadora from './Calculadora.astro';
+import { copy, marketplaces, split, fees, tones, TOTAL_MI, WHATSAPP, INSTAGRAM, hasPlaceholders, type Lang } from '../data/content';
+import { SHOW_EXAMPLES } from '../data/mode';
+import '../styles/global.css';
+
+interface Props { lang: Lang }
+const { lang } = Astro.props;
+const t = copy[lang];
+
+// EXEMPLO: no dev e nos previews aparece com selo; em produção some (nada inventado vai ao ar).
+const show = SHOW_EXAMPLES;
+const real = <T extends { placeholder?: boolean }>(xs: readonly T[]) => (show ? [...xs] : xs.filter((x) => !x.placeholder));
+const showSplit = show || !split.placeholder;
+const cases = real(t.provas.cases), quotes = real(t.provas.testimonials), logos = real(t.provas.logos), faqs = real(t.faq.items);
+const showProvas = cases.length + quotes.length + logos.length > 0;
+if (!show && hasPlaceholders([t, split, fees]) && lang === 'pt') {
+  console.info('[km360] build de produção: itens EXEMPLO escondidos (troque em src/data/content.ts para publicar).');
+}
+
+const fmt = (n: number) => n.toLocaleString(t.htmlLang, { maximumFractionDigits: 1 });
+const segs = marketplaces.map((m) => ({ ...m, share: split.shares[m.id], mi: (TOTAL_MI * split.shares[m.id]) / 100 }));
+const maxShare = Math.max(...segs.map((m) => m.share));
+
+// Cada seção carrega a própria cor: o JS despeja do anel; sem JS, a seção pinta o próprio fundo.
+const tone = (bg: string, ink: string, extra = '') => ({ 'data-bg': bg, 'data-ink': ink, style: `--tone-bg:${bg};--tone-ink:${ink};${extra}` });
+
+const site = Astro.site;
+const abs = (p: string) => (site ? new URL(p, site).href : p);
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'ProfessionalService',
+  name: 'KM 360 Assessoria Comercial',
+  description: t.meta.description,
+  image: abs('/logo.jpg'),
+  telephone: '+55 11 98817-9980',
+  address: { '@type': 'PostalAddress', addressLocality: 'São Paulo', addressRegion: 'SP', addressCountry: 'BR' },
+  areaServed: 'BR',
+  sameAs: [`https://www.instagram.com/${INSTAGRAM}/`],
+};
+// Posições de "caos" determinísticas para as etiquetas do capítulo Problema.
+const chaos = (i: number) => `--dx:${((i * 37) % 70) - 35};--dy:${((i * 53) % 60) - 30};--r:${((i * 71) % 120) - 60}`;
+---
+
+<!doctype html>
+<html lang={t.htmlLang}>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>{t.meta.title}</title>
+    <meta name="description" content={t.meta.description} />
+    <meta name="theme-color" content="#030A16" />
+    <link rel="icon" href="/favicon.png" />
+    {site && <link rel="canonical" href={abs(lang === 'pt' ? '/' : '/es/')} />}
+    {site && <link rel="alternate" hreflang="pt-BR" href={abs('/')} />}
+    {site && <link rel="alternate" hreflang="es" href={abs('/es/')} />}
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content={t.meta.title} />
+    <meta property="og:description" content={t.meta.description} />
+    <meta property="og:image" content={abs('/logo.jpg')} />
+    {site && <meta property="og:url" content={abs(lang === 'pt' ? '/' : '/es/')} />}
+    <meta property="og:locale" content={lang === 'pt' ? 'pt_BR' : 'es_ES'} />
+    <meta name="twitter:card" content="summary" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,300..900&display=swap" />
+    <script is:inline>document.documentElement.classList.add('js')</script>
+    <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
+    <noscript><style>.chapter{--p:.6!important}.big-n{--n:var(--to)!important}</style></noscript>
+  </head>
+  <body>
+    <a class="skip" href="#diagnostico">{t.nav.cta}</a>
+    <div class="pour" aria-hidden="true"></div>
+
+    <header class="top">
+      <a class="wordmark" href={lang === 'pt' ? '/' : '/es/'} aria-label="KM 360">
+        <!-- Logo vetorial (traçado sobre public/logo.jpg) para poder recolorir por seção. -->
+        <svg class="km-logo" viewBox="24 26 800 540" aria-hidden="true" focusable="false">
+          <defs>
+            <linearGradient id="km-k" x1="0" y1="1" x2="1" y2="0"><stop offset="0" class="km-k1" /><stop offset="1" class="km-k2" /></linearGradient>
+          </defs>
+          <path class="km-arc" d="M386 33.3A272 272 0 0 1 725.6 385M637.5 506.3A272 272 0 0 1 408.8 557" />
+          <path class="km-k" d="M32 100h52v395H32zM84 268 275 122h59L84 336z" />
+          <path class="km-m" d="M135 330 180 305 382 525h-54zM285 190 430 350 570 190v305h-38V245l-102 153-112-153v175h-33z" />
+          <text class="km-360" x="598" y="488">360</text>
+        </svg>
+      </a>
+      <nav class="top-nav" id="menu" aria-label={t.nav.label}>
+        <a href="#calculadora">{t.nav.calc}</a>
+        <a href="#marketplaces">{t.nav.marketplaces}</a>
+        <a href="#resultados">{t.nav.resultados}</a>
+        <a href="#metodo">{t.nav.metodo}</a>
+        {faqs.length > 0 && <a href="#perguntas">{t.nav.faq}</a>}
+        <a class="lang" href={t.nav.otherHref} hreflang={lang === 'pt' ? 'es' : 'pt-BR'} aria-label={t.nav.otherLabel}><b>{t.nav.other}</b><span class="lang-name">{t.nav.otherLabel}</span></a>
+      </nav>
+      <a class="btn btn-primary btn-small" href="#diagnostico">{t.nav.cta}</a>
+      <button class="menu-btn" type="button" aria-controls="menu" aria-expanded="false"><i aria-hidden="true"></i>{t.nav.menu}</button>
+    </header>
+
+    <a class="ring360" href="#diagnostico" aria-label={t.ring.label}>
+      <Ring />
+      <span class="ring360-dots" aria-hidden="true">
+        {segs.map((m) => <i style={`--accent:${m.accent}`}></i>)}
+      </span>
+    </a>
+
+    <main>
+      <!-- 1. Hero -->
+      <div class="tone" data-head="brand" {...tone(...tones.hero)}>
+        <Chapter clip="hero" id="inicio" len={130} turntable={t.hero.objLabel} hint={t.hero.drag} class="hero">
+          <div slot="fallback" class="fb-plate">
+            <div class="plate">
+              <div class="face"><img src="/logo.jpg" alt="" width="1254" height="1254" draggable="false" /></div>
+              <div class="face back"><img src="/logo.jpg" alt="" width="1254" height="1254" draggable="false" /></div>
+            </div>
+          </div>
+          <div class="hero-copy">
+            <p class="kicker">{t.hero.kicker}</p>
+            <h1 class="display">
+              <span>{t.hero.line1}</span>
+              <span>{t.hero.line2a}<em>{t.hero.line2b}</em></span>
+            </h1>
+            <p class="lede">{t.hero.text}</p>
+            <div class="actions">
+              <a class="btn btn-primary" href="#diagnostico">{t.hero.cta} <span class="arr" aria-hidden="true">→</span></a>
+              <a class="btn btn-ghost" href="#calculadora">{t.hero.cta2}</a>
+            </div>
+            <ul class="authority">
+              {t.hero.authority.map((a) => <li><strong>{a.big}</strong> <span>{a.label}</span></li>)}
+            </ul>
+          </div>
+        </Chapter>
+      </div>
+
+      <!-- 2. Problema + calculadora -->
+      <div class="tone" {...tone(...tones.problema)}>
+        <Chapter clip="problema" len={150} flip noFrames>
+          <div slot="fallback" class="fb-tags">
+            {t.problema.tags.map((tag, i) => <span style={chaos(i)}>{tag}</span>)}
+          </div>
+          <div class="copy">
+            <p class="kicker">{t.problema.kicker}</p>
+            <h2 class="h2">{t.problema.title}</h2>
+            <p class="lede">{t.problema.text}</p>
+          </div>
+        </Chapter>
+        <section class="block leaks-block" aria-label={t.problema.kicker}>
+          <ul class="leaks">
+            {t.problema.items.map((it) => <li><h3>{it.t}</h3><p>{it.d}</p></li>)}
+          </ul>
+        </section>
+        <Calculadora lang={lang} />
+      </div>
+
+      <!-- 3–6. Marketplaces -->
+      {segs.map((m, i) => (
+        <div class="tone" {...tone(m.accent, m.ink, 'accent2' in m ? `--echo:${m.accent2}` : '')}>
+          {i === 0 && (
+            <section class="block mk-intro" id="marketplaces">
+              <p class="kicker">{t.mkIntro.kicker}</p>
+              <h2 class="h2">{t.mkIntro.title}</h2>
+              <p class="lede">{t.mkIntro.text}</p>
+            </section>
+          )}
+          <Chapter clip={m.id} len={140} flip={i % 2 === 1} class="mk-chapter">
+            <div slot="fallback" class="fb-ring">
+              {'accent2' in m && <Ring class="ring-echo" />}
+              <Ring />
+              <i class="orbit"></i>
+            </div>
+            <div class="mk-copy">
+              <p class="kicker">{t.mkKicker}</p>
+              <h2 class="mk-name">{m.name}</h2>
+            </div>
+          </Chapter>
+          <section class="block mk-detail" aria-label={m.name}>
+            <div>
+              <p class="mk-lead">{t.mk[m.id].lead}</p>
+              <div class="mk-trap inv">
+                <p class="kicker">{t.traps.title}</p>
+                <p>{t.traps[m.id]}</p>
+              </div>
+            </div>
+            <div>
+              <ul class="mk-points">
+                {t.mk[m.id].points.map((pt) => <li>{pt}</li>)}
+              </ul>
+              {showSplit && (
+                <p class="mk-stat">
+                  <strong class="num">R$ {fmt(m.mi)} mi</strong>
+                  <span>{t.mkStat}</span>
+                  {split.placeholder && <span class="badge">{t.badge}</span>}
+                </p>
+              )}
+            </div>
+          </section>
+        </div>
+      ))}
+
+      <!-- 7. Resultados -->
+      <div class="tone" {...tone(...tones.resultados)}>
+        <Chapter clip="resultados" id="resultados" len={160}>
+          <div slot="fallback" class="fb-bars">
+            {Array.from({ length: 7 }, (_, i) => <i style={`--i:${i}`}></i>)}
+          </div>
+          <div class="copy">
+            <p class="kicker">{t.resultados.kicker}</p>
+            <p class="big">
+              <span class="sr-only">{t.resultados.prefix} {TOTAL_MI} {t.resultados.unit}</span>
+              <span class="big-prefix" aria-hidden="true">{t.resultados.prefix}</span><span class="big-n num" aria-hidden="true" style={`--to:${TOTAL_MI}`}></span><span class="big-unit" aria-hidden="true">{t.resultados.unit}</span>
+            </p>
+            <p class="lede">{t.resultados.title}</p>
+          </div>
+        </Chapter>
+        {showSplit && <section class="block split">
+          <h2 class="h3">{t.resultados.splitTitle} {split.placeholder && <span class="badge">{t.badge}</span>}</h2>
+          <ul class="bars">
+            {segs.map((m) => (
+              <li style={`--w:${m.share / maxShare}`}>
+                <span class="bar-name">{m.name}</span>
+                <span class="bar" aria-hidden="true"><i></i></span>
+                <span class="bar-val num">{m.share}% · R$ {fmt(m.mi)} mi</span>
+              </li>
+            ))}
+          </ul>
+        </section>}
+      </div>
+
+      <!-- 8. Método 360 + serviços -->
+      <div class="tone" {...tone(...tones.metodo)}>
+        <section class="block metodo" id="metodo">
+          <p class="kicker">{t.metodo.kicker}</p>
+          <h2 class="h2">{t.metodo.title}</h2>
+          <ol class="steps">
+            {t.metodo.steps.map((s, i) => (
+              <li style={`--k:${(i + 1) / 3}`}>
+                <span class="step-deg" aria-hidden="true"><Ring /><b class="num">{(i + 1) * 120}°</b></span>
+                <h3>{s.t}</h3>
+                <p>{s.d}</p>
+              </li>
+            ))}
+          </ol>
+          <h3 class="sub">{t.metodo.servicesTitle}</h3>
+          <ul class="services">
+            {t.metodo.services.map((s) => <li><h4>{s.t}</h4><p>{s.d}</p></li>)}
+          </ul>
+        </section>
+      </div>
+
+      <!-- 9. Provas -->
+      {(showProvas || faqs.length > 0) && <div class="tone" {...tone(...tones.provas)}>
+        {showProvas && <section class="block provas" id="provas">
+          <p class="kicker">{t.provas.kicker}</p>
+          {cases.length > 0 && <h2 class="h2">{t.provas.casesTitle}</h2>}
+          {cases.length > 0 && <ul class="cases">
+            {cases.map((c) => (
+              <li class="inv" data-tilt>
+                {c.placeholder && <span class="badge">{t.badge}</span>}
+                <p class="case-seg">{c.seg}</p>
+                <p class="case-where">{c.where}</p>
+                <dl>
+                  <div><dt>{t.provas.before}</dt><dd class="num">{c.before}</dd></div>
+                  <div class="after"><dt>{t.provas.after}</dt><dd class="num">{c.after}</dd></div>
+                </dl>
+              </li>
+            ))}
+          </ul>}
+
+          {quotes.length > 0 && <h2 class="h2 h2-gap">{t.provas.testimonialsTitle}</h2>}
+          {quotes.length > 0 && <ul class="quotes">
+            {quotes.map((q) => (
+              <li>
+                <figure>
+                  {q.placeholder && <span class="badge">{t.badge}</span>}
+                  <blockquote>{q.quote}</blockquote>
+                  <figcaption>{q.who}</figcaption>
+                </figure>
+              </li>
+            ))}
+          </ul>}
+
+          {logos.length > 0 && <h3 class="sub">{t.provas.logosTitle}</h3>}
+          {logos.length > 0 && <ul class="logos">
+            {logos.map((l) => <li>{l.label}{l.placeholder && <span class="badge">{t.badge}</span>}</li>)}
+          </ul>}
+        </section>}
+        {faqs.length > 0 && <section class="block faq" id="perguntas" aria-labelledby="faq-title">
+          <p class="kicker">{t.faq.kicker}</p>
+          <h2 id="faq-title" class="h2">{t.faq.title}</h2>
+          <div class="faq-list">
+            {faqs.map((f) => (
+              <details>
+                <summary>{f.q}</summary>
+                <p>{f.a} {f.placeholder && <span class="badge">{t.badge}</span>}</p>
+              </details>
+            ))}
+          </div>
+        </section>}
+      </div>}
+
+      <!-- 10. Volta completa + diagnóstico -->
+      <div class="tone" data-head="brand" {...tone(...tones.final)}>
+        <Chapter clip="final" len={140}>
+          <div slot="fallback" class="fb-final">
+            <Ring />
+          </div>
+          <div class="copy">
+            <p class="kicker">{t.final.kicker}</p>
+            <h2 class="h2">{t.final.title}</h2>
+            <p class="lede">{t.final.text}</p>
+          </div>
+        </Chapter>
+        <Diagnostico lang={lang} />
+      </div>
+    </main>
+
+    <footer class="tone foot" data-head="brand" {...tone(...tones.final)}>
+      <p class="foot-tag">{t.footer.tagline}</p>
+      <ul>
+        <li>{t.footer.place}</li>
+        <li><a href={`https://wa.me/${WHATSAPP}`} rel="noopener" target="_blank">{t.footer.whatsapp}</a></li>
+        <li><a href={`https://www.instagram.com/${INSTAGRAM}/`} rel="noopener" target="_blank">@{INSTAGRAM}</a></li>
+      </ul>
+      <p class="foot-fine">{t.footer.unreal} {t.footer.rights}</p>
+    </footer>
+
+    <script>
+      import '../scripts/scroll.ts';
+    </script>
+  </body>
+</html>

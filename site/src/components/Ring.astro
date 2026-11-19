@@ -1,0 +1,10 @@
+---
+// Anel 360: trilho + arco que fecha conforme --p (capítulo) ou --page-p (página).
+interface Props { class?: string }
+const { class: cls } = Astro.props;
+---
+
+<svg class:list={['ring', cls]} viewBox="0 0 100 100" aria-hidden="true">
+  <circle class="ring-track" cx="50" cy="50" r="46" pathLength="1"></circle>
+  <circle class="ring-arc" cx="50" cy="50" r="46" pathLength="1"></circle>
+</svg>
